@@ -1,4 +1,5 @@
 require "bundler/setup"
+require "pry"
 require "ms5611"
 
 RSpec.configure do |config|
@@ -11,4 +12,8 @@ RSpec.configure do |config|
   config.expect_with :rspec do |c|
     c.syntax = :expect
   end
+
+  config.filter_run_including focus: true
+  config.run_all_when_everything_filtered = true
+
 end
