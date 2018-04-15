@@ -1,28 +1,68 @@
 # Ms5611
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/ms5611`. To experiment with that code, run `bin/console` for an interactive prompt.
+![](https://i.gyazo.com/3842bc3a03507d6fa9a17de2af94dee8.jpg)
 
-TODO: Delete this and the text above, and describe your gem
+This gem let you connect to your MS5611 module through I2C.
+
+## wiring
+
+* 3.3v pin:01
+* ground pin:06
+* SDA pin:03
+* SCLK pin:05
+
+![](https://i.gyazo.com/29d9291e0c24ca69df92f2d90e3acb75.png)
+
+![](https://i.gyazo.com/d5b9599db42126685df37e1160b4812e.png)
 
 ## Installation
 
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'ms5611'
+gem 'ms5611', github: "https://github.com/github0013/ms5611.git"
 ```
 
 And then execute:
 
     $ bundle
 
-Or install it yourself as:
-
-    $ gem install ms5611
-
 ## Usage
 
-TODO: Write usage instructions here
+```rb
+require "ms5611"
+
+# Ms5611::I2c::Module.detect_i2c_bus_path
+# will print something like /dev/i2c-1
+
+# Ms5611::I2c::Module.print_i2c_addresses
+# will print something like this to let you find your i2c device addres
+# 0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f
+# 00:          -- -- -- -- -- -- -- -- -- -- -- -- --
+# 10: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+# 20: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+# 30: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+# 40: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+# 50: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+# 60: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+# 70: -- -- -- -- -- -- -- 77
+
+
+#            i2c_device_address
+# you need to find your i2c_device_address first.
+# Ms5611::I2c::Module.print_i2c_addresses
+# displays connected i2c device addresses
+
+#            i2c_bus_path
+# without i2c_bus_path keyword param, it will try to find a path by itself
+ms5611 = Ms5611::I2c::Module.new(i2c_device_address: 0x77)
+
+# OR ... specify the path if you already know
+# Ms5611::I2c::Module.new(i2c_device_address: 0x77, i2c_bus_path: "/dev/i2c-1")
+
+ms5611.temperature # 23.45
+ms5611.pressure # 1017.89
+```
 
 ## Development
 
