@@ -25,12 +25,16 @@ module Ms5611
         @i2c_address = i2c_device_address
         @i2c_device = I2C.create(i2c_bus_path)
 
-        reset
-        # https://i.gyazo.com/bee6120d66dbdbd812c652c2b4770cf1.png
-        @proms = 1.upto(6).collect do |address|
-          read_prom(address)
+        loop do
+          reset
+          # https://i.gyazo.com/bee6120d66dbdbd812c652c2b4770cf1.png
+          @proms = 1.upto(6).collect do |address|
+            read_prom(address)
+          end
+
+          # check if proms are all good
+          break if read_crc4 == check_crc4
         end
-        @crc4 = read_crc4
       end
 
       # https://i.gyazo.com/17fb7cdc7306ebec31e64a51659869fb.png
@@ -54,7 +58,7 @@ module Ms5611
 
       private
 
-        attr_reader :i2c_device, :i2c_address, :proms, :crc4
+        attr_reader :i2c_device, :i2c_address, :proms
         BITS_IN_BYTE = 8
         # https://i.gyazo.com/c7e6043ff8d8c366dbce3f3def0b7d25.png
         RESET_SLEEP_TIME = 2.8.ceil / 1000.0
@@ -96,6 +100,31 @@ module Ms5611
           byte_size = 16 / BITS_IN_BYTE
           _, b0 = read(byte_size, 0xAE)
           b0 &= 0b00001111
+        end
+
+        # https://i.gyazo.com/f960f27248b03fda58c27a229d2f9742.png
+        # http://www.amsys-sensor.eu/sheets/amsys.fr.an520_e.pdf
+        # https://github.com/diresi/ms5803/blob/master/crc4.c
+        def check_crc4
+          targets = [read_prom(0)] + proms + [read_prom(7)]
+          data = 0
+          16.times do |index|
+            this_value = targets[index / 2]
+            data ^= index.odd? ? this_value & 0x00FF : this_value>>8
+
+            8.times do
+              if (data & 0x8000) == 0 # 16th bit is 1 or not
+                # 16th bit is 0
+                data <<= 1
+              else
+                # 16th bit is 1
+                data = (data << 1) ^ 0x3000
+              end
+            end
+          end
+
+          data = 0x000F & (data>>12)
+          data ^ 0x0000
         end
 
         # https://i.gyazo.com/4b676da17ee1ed37c7e16c114eb0fa48.png
