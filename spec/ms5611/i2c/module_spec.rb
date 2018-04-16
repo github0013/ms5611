@@ -44,11 +44,15 @@ module Ms5611
         let(:i2c_address){ 0x77 }
 
         before do
-          allow(subject).to receive(:i2c_address).and_return i2c_address
-          allow(subject).to receive(:sleep)
         end
 
-        subject{ Module.new(i2c_device_address: i2c_address, i2c_bus_path: "/dev/i2c-1") }
+        subject do
+          allow_any_instance_of(Module).to receive(:load_proms)
+          Module.new(i2c_device_address: i2c_address, i2c_bus_path: "/dev/i2c-1").tap do |s|
+            allow(s).to receive(:i2c_address).and_return i2c_address
+            allow(s).to receive(:sleep)
+          end
+        end
 
         describe :write do
           it do
@@ -67,7 +71,7 @@ module Ms5611
         describe :reset do
           it do
             subject.send(:reset)
-            expect(i2c_device).to have_received(:write).with(i2c_address, 0x1E).twice # initializer call + send
+            expect(i2c_device).to have_received(:write).with(i2c_address, 0x1E)
             expect(subject).to have_received(:sleep).with(Module::RESET_SLEEP_TIME)
           end
         end

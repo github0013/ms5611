@@ -25,16 +25,7 @@ module Ms5611
         @i2c_address = i2c_device_address
         @i2c_device = I2C.create(i2c_bus_path)
 
-        loop do
-          reset
-          # https://i.gyazo.com/bee6120d66dbdbd812c652c2b4770cf1.png
-          @proms = 1.upto(6).collect do |address|
-            read_prom(address)
-          end
-
-          # check if proms are all good
-          break if read_crc4 == check_crc4
-        end
+        load_proms
       end
 
       # https://i.gyazo.com/17fb7cdc7306ebec31e64a51659869fb.png
@@ -125,6 +116,19 @@ module Ms5611
 
           data = 0x000F & (data>>12)
           data ^ 0x0000
+        end
+
+        def load_proms
+          10.times.find do
+            reset
+            # https://i.gyazo.com/bee6120d66dbdbd812c652c2b4770cf1.png
+            @proms = 1.upto(6).collect do |address|
+              read_prom(address)
+            end
+
+            # check if proms are all good
+            read_crc4 == check_crc4
+          end.tap{|matched| raise Crc4Error unless matched }
         end
 
         # https://i.gyazo.com/4b676da17ee1ed37c7e16c114eb0fa48.png
