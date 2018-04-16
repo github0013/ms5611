@@ -64,6 +64,42 @@ ms5611.temperature # 23.45
 ms5611.pressure # 1017.89
 ```
 
+## benchmark
+
+```bash
+cat /sys/firmware/devicetree/base/model
+Raspberry Pi Model B Plus Rev 1.2
+
+cat /etc/os-release
+PRETTY_NAME="Raspbian GNU/Linux 9 (stretch)"
+NAME="Raspbian GNU/Linux"
+VERSION_ID="9"
+VERSION="9 (stretch)"
+ID=raspbian
+ID_LIKE=debian
+HOME_URL="http://www.raspbian.org/"
+SUPPORT_URL="http://www.raspbian.org/RaspbianForums"
+BUG_REPORT_URL="http://www.raspbian.org/RaspbianBugs"
+```
+
+```rb
+require 'benchmark'
+ms5611 = Ms5611::I2c::Module.new(i2c_device_address: 0x77)
+
+Benchmark.bm 10 do |r|
+  r.report :pressure do
+    1000.times{ ms5611.pressure }
+  end
+end
+
+#                  user     system      total        real
+# pressure     3.280000   1.160000   4.440000 ( 43.774997)
+##########################
+# (43.774997 / 1000).round 4
+# 0.0438 / call
+##########################
+```
+
 ## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
