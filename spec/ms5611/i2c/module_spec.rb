@@ -90,6 +90,48 @@ module Ms5611
           end
         end
 
+        describe :check_crc4 do
+          before do
+            allow(subject).to receive(:read_prom).with(0).and_return 2136
+            allow(subject).to receive(:proms).and_return [46954, 50001, 28678, 25683, 32024, 27516]
+            allow(subject).to receive(:read_prom).with(7).and_return 46082
+          end
+
+          it{ expect(subject.send :check_crc4).to eq 2 }
+        end
+
+        describe :load_proms do
+          subject{ Module.new(i2c_device_address: i2c_address, i2c_bus_path: "/dev/i2c-1") }
+
+          context "when fails to match crc4" do
+            before do
+              allow_any_instance_of(Module).to receive(:reset)
+              allow_any_instance_of(Module).to receive(:read_prom)
+
+              allow_any_instance_of(Module).to receive(:read_crc4).and_return(1)
+              allow_any_instance_of(Module).to receive(:check_crc4).and_return(0)
+            end
+
+            it{ expect{ subject }.to raise_error Module::Crc4Error }
+          end
+
+          context "when crc4 matches" do
+            before do
+              allow_any_instance_of(Module).to receive(:reset)
+              allow_any_instance_of(Module).to receive(:read_prom)
+
+              allow_any_instance_of(Module).to receive(:read_crc4).and_return(1)
+              allow_any_instance_of(Module).to receive(:check_crc4).and_return(1)
+            end
+
+            it do
+              expect{ subject }.not_to raise_error
+              expect(subject).to have_received(:reset).once
+              expect(subject).to have_received(:read_prom).exactly(6).times
+            end
+          end
+        end
+
         describe "c1 to c6" do
           let(:proms){ (1..6).to_a }
 

@@ -4,6 +4,7 @@ module Ms5611
     class Module
 
       class I2CNotFoundError < StandardError; end
+      class Crc4Error < StandardError; end
 
       class << self
         def detect_i2c_bus_path
@@ -99,17 +100,19 @@ module Ms5611
         def check_crc4
           targets = [read_prom(0)] + proms + [read_prom(7)]
           data = 0
-          16.times do |index|
-            this_value = targets[index / 2]
-            data ^= index.odd? ? this_value & 0x00FF : this_value>>8
 
-            8.times do
-              if (data & 0x8000) == 0 # 16th bit is 1 or not
-                # 16th bit is 0
-                data <<= 1
-              else
-                # 16th bit is 1
-                data = (data << 1) ^ 0x3000
+          targets.each do |this_value|
+            [this_value>>8, this_value & 0x00FF].each do |value|
+              data ^= value
+
+              8.times do
+                if (data & 0x8000) == 0 # 16th bit is 1 or not
+                  # 16th bit is 0
+                  data <<= 1
+                else
+                  # 16th bit is 1
+                  data = (data << 1) ^ 0x3000
+                end
               end
             end
           end
