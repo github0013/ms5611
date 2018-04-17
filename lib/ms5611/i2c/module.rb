@@ -54,8 +54,8 @@ module Ms5611
         BITS_IN_BYTE = 8
         # https://i.gyazo.com/c7e6043ff8d8c366dbce3f3def0b7d25.png
         RESET_SLEEP_TIME = 2.8.ceil / 1000.0
-        # https://i.gyazo.com/dc1977aec03252d7dcaf91da63b2093d.png
-        CONVERSION_SLEEP_TIME = 8.22.ceil / 1000.0
+        # https://i.gyazo.com/49259c2d354848ba3e49b2fca9b6e4b2.png
+        OSR_4096_TIME = 8.22.ceil / 1000.0
 
         # commands
         # https://i.gyazo.com/c5705fd105799aff9297524744cf5d41.png
@@ -149,7 +149,7 @@ module Ms5611
         [0x48, 0x58].each.with_index(1) do |command, index|
           define_method "d#{index}" do
             write(command)
-            sleep CONVERSION_SLEEP_TIME
+            sleep OSR_4096_TIME
 
             byte_size = 24 / BITS_IN_BYTE
             b2, b1, b0 = read(byte_size, 0x00)
